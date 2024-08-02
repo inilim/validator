@@ -108,12 +108,13 @@ abstract class ValidAbstract
         $methods      = [];
         foreach ($ref->getMethods() as $method) {
             /** @var \ReflectionMethod $method */
+
             // INFO убираем наследуемые методы
-            if ($static_class === $method->class) {
-                $name = $method->getName();
-                if (!\in_array($name, static::EXCEPT)) {
-                    $methods[] = $name;
-                }
+            if ($static_class !== $method->class) continue;
+
+            $name = $method->getName();
+            if (!\in_array($name, static::EXCEPT)) {
+                $methods[] = $name;
             }
         }
         return $methods;
