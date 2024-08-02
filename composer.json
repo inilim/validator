@@ -1,0 +1,27 @@
+{
+    "name": "inilim/validator",
+    "description": "validator",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Inilim\\Validator\\": "src/"
+        },
+        "files": []
+    },
+    "authors": [
+        {
+            "name": "inilim"
+        }
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "require": {
+        "php": "^8.2",
+        "inilim/file_cache": "dev-new_method"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "@stable",
+        "inilim/dump": "dev-main"
+    }
+}
