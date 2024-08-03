@@ -4,8 +4,14 @@ namespace Inilim\Validator;
 
 readonly class ValidResult
 {
+    /**
+     * @param array $errors
+     * @param array $checked_keys ключи что были проверены
+     */
     function __construct(
-        public array $errors
+        protected array $errors,
+        protected array $checked_keys,
+        protected array $data,
     ) {
     }
 

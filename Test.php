@@ -1,68 +1,39 @@
 <?php
 
+require_once __DIR__ . '/vendor/autoload.php';
+
+use Inilim\Dump\Dump;
+
+Dump::init();
+
 class Test extends \Inilim\Validator\ValidAbstract
 {
-    public const ALIAS  = [
-        'responsible_user_id' => 'res_user_id',
+    const ALIAS  = [
+        'three.*' => '_333',
     ];
 
-    public const EXCEPT = [
-        '__construct',
-        'allocation',
-        'setting',
-        'checkResponsibleUser',
-    ];
-
-    function allocation()
+    protected function _333($key, $data)
     {
+        de($key);
     }
 
-    function setting(array &$data): self
+    protected function one($key, $data)
     {
-        $this->exec($data, [
-            'responsible_user_id',
-            'pipeline_id',
-            'profit',
-            'cost',
-            'revenue',
-            'filter',
-            'send_leads_to_unsorted',
-            'use_date_of_sale',
-            'use_companies_as_client',
-            'manager_for_deal_if_contact_found',
-            'filtering_value',
-            'form_id',
-            'form_name',
-        ]);
-
-        return $this;
-    }
-
-    function checkResponsibleUser(int $res_user_id): bool
-    {
-        return false;
-    }
-
-    // ------------------------------------------------------------------
-    // 
-    // ------------------------------------------------------------------
-
-    protected function res_user_id($key)
-    {
-        dde($key);
-        $vdata = $this->getVData();
-        $value = \_arr()->dataGet($vdata->data, $key);
-        if ($value === null) {
-            return;
-        }
-
-        if (!\isInt($value)) {
-            $this->setError('не число', $key);
-            return;
-        }
-
-        if (!$this->checkResponsibleUser(\int($value))) {
-            $this->setError('Ответственный пользователь не найден', $key);
-        }
     }
 }
+
+
+$a = new Test;
+
+
+$data = [
+    'one' => '',
+    'two' => 123,
+    'three' => [123, 123, 123],
+];
+
+$a->exec($data, [
+    'one',
+    'two',
+    'three.*',
+]);

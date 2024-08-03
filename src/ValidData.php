@@ -7,10 +7,10 @@ use Inilim\Validator\ValidAbstract;
 class ValidData
 {
     /**
-     * @var array<string,TRUE>
+     * @var array<string,BOOL>
      */
-    protected array $checked = [];
-    protected array $err     = [];
+    public array $checked = [];
+    public array $err     = [];
 
     function __construct(
         readonly public array $data,
@@ -19,34 +19,24 @@ class ValidData
     ) {
     }
 
-    function isChecked(string $key): bool
+    function getStatusByKey(string $key): ?bool
     {
-        return $this->checked[$this->_getMethod($key)] ?? false;
+        return $this->checked[$key] ?? null;
     }
 
-    // ------------------------------------------------------------------
-    // 
-    // ------------------------------------------------------------------
+    function isChecked(string $key): bool
+    {
+        return isset($this->checked[$key]);
+    }
 
-    private function _setError(string $msg, string $key): void
+    function setError(string $key, string $msg): void
     {
         $this->err[$key] ??= [];
         $this->err[$key][] = $msg;
     }
 
-    private function _checked(string $key): void
+    function checked(string $key, bool $status): void
     {
-        $this->checked[$this->_getMethod($key)] = true;
-    }
-
-    private function _getMethod(string $key): string
-    {
-        return (function (string $key): string {
-            /**
-             * @var ValidAbstract $this
-             */
-            return $this->getMethod($key);
-        })
-            ->bindTo($this->context)->__invoke($key);
+        $this->checked[$key] = $status;
     }
 }

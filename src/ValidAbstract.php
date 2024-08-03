@@ -3,29 +3,27 @@
 namespace Inilim\Validator;
 
 use Inilim\Validator\ValidData;
+use Inilim\Validator\ValidResult;
 
 abstract class ValidAbstract
 {
     /**
      * @var array<string,string>
      */
-    public const ALIAS  = [];
+    const ALIAS  = [];
     /**
      * @var string[] исключаем методы
      */
-    public const EXCEPT = [];
+    const EXCEPT = [];
 
     private ValidData $vdata;
 
-    protected function getVData(): ValidData
-    {
-        return $this->vdata;
-    }
+
 
     /**
      * @param string[] $check_keys какие ключи проверять
      */
-    protected function exec(array &$data, array $check_keys = []): void
+    function exec(array $data, array $check_keys = [])
     {
         $ex = !!$check_keys;
 
@@ -35,68 +33,102 @@ abstract class ValidAbstract
             context: $this,
         );
 
-        foreach ($this->getCachedMethods() as $method) {
-
+        foreach ($this->getMethods() as $method) {
+            $key = $this->getKey($method);
             if ($ex) {
-                de($method);
-                if (!\in_array($method, $check_keys, true)) {
+                if (!\in_array($key, $check_keys, true)) {
                     continue;
                 }
             }
 
-            // INFO проверить
-            $this->check($method);
+            $this->check($key);
         }
+
+        // de($this->vdata);
+
+        return new ValidResult(
+            errors: $this->vdata->err,
+            checked_keys: \array_keys($this->vdata->checked),
+            data: $this->vdata->data,
+        );
     }
 
-    protected function check(string $key): void
+    protected function isCheckedByMethod(string $method): bool
     {
-        if ($this->vdata->isChecked($key)) return;
-        $m = $this->getMethod($key);
-        $this->$m($key);
-        $this->checked($key);
+        return $this->vdata->isChecked($this->getKey($method));
     }
-
-    // ------------------------------------------------------------------
-    // INFO ERRORS
-    // ------------------------------------------------------------------
-
-    protected function setError(string $msg, string $key): void
+    protected function isCheckedByKey(string $key): bool
     {
-        (function (string $msg, string $key): void {
-            /** @var ValidData $this */
-            $this->_setError($msg, $key);
-        })
-            ->bindTo($this->vdata)->__invoke($msg, $key);
+        return $this->vdata->isChecked($key);
     }
 
-    // ------------------------------------------------------------------
-    // 
-    // ------------------------------------------------------------------
-
-    private function getMethod(string $method): string
+    protected function getStatusByMethod(string $method): ?bool
     {
-        return static::ALIAS[$method] ?? $method;
+        return $this->vdata->getStatusByKey($this->getKey($method));
+    }
+    protected function getStatusByKey(string $key): ?bool
+    {
+        return $this->vdata->getStatusByKey($key);
     }
 
-    private function checked(string $key): void
+    protected function checkedByMethod(string $method): bool
     {
-        (function (string $key): void {
-            /** @var ValidData $this */
-            $this->_checked($key);
-        })
-            ->bindTo($this->vdata)->__invoke($key);
+        return $this->check($this->getKey($method));
+    }
+    protected function checkedByKey(string $key): bool
+    {
+        return $this->check($key);
     }
 
-    private function getCachedMethods(): array
+    private function check(string $key): bool
     {
-        return \fileCache()
-            ->getOrSaveFromClaster(
-                static::class,
-                self::class,
-                $this->getMethods(...),
-            ) ?? $this->getMethods();
+        if ($this->vdata->isChecked($key)) {
+            return $this->vdata->getStatusByKey($key);
+        }
+        $method = $this->getMethod($key);
+        $result = $this->$method($key, $this->vdata->data);
+
+        if (\is_string($result)) {
+            $status = false;
+            $this->vdata->setError($key, $result);
+        } elseif ($result === null) {
+            $status = true;
+        } elseif ($result === true) {
+            $status = true;
+        } elseif ($result === false) {
+            $status = false;
+            $this->vdata->setError($key, 'not valid');
+        } else {
+            throw new \Exception();
+        }
+
+        $this->vdata->checked($key, $status);
+        return $status;
     }
+
+    private function getMethod(string $key): string
+    {
+        return static::ALIAS[$key] ?? $key;
+    }
+
+    private function getKey(string $method): string
+    {
+        // TODO потом сделать нормально
+        foreach (static::ALIAS as $key => $m) {
+            if ($m === $method) return $key;
+        }
+        return $method;
+    }
+
+    // private function getCachedMethods(): array
+    // {
+    //     return \fileCache()
+    //         ->getOrSaveFromClaster(
+    //             static::class,
+    //             self::class,
+    //             $this->getMethods(...),
+    //         ) ?? $this->getMethods();
+    // }
 
     /**
      * @return string[]
